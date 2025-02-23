@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
+export const runtime = 'edge';
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -64,28 +66,31 @@ Guidelines:
 
 export async function POST(req: Request) {
   try {
+    console.log('API route hit - starting process');
     const { audioData, text } = await req.json();
+    console.log('Request parsed:', { hasAudio: !!audioData, hasText: !!text });
     
     let storyText: string;
 
     if (audioData) {
-      // Convert base64 to File
+      console.log('Processing audio data');
       const base64Data = audioData.split(',')[1];
       const binaryData = Buffer.from(base64Data, 'base64');
       const audioFile = new File([binaryData], 'audio.webm', { type: 'audio/webm' });
       
-      // Step 1: Transcribe audio using Whisper
+      console.log('Starting Whisper transcription');
       const transcription = await openai.audio.transcriptions.create({
         file: audioFile,
         model: "whisper-1",
       });
+      console.log('Whisper transcription complete');
 
       storyText = transcription.text;
     } else {
       storyText = text;
     }
 
-    // Step 2: Analyze the story using GPT-4o
+    console.log('Starting GPT analysis');
     const analysis = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -100,21 +105,31 @@ export async function POST(req: Request) {
       ],
       response_format: { type: "json_object" }
     });
+    console.log('GPT analysis complete');
 
     const content = analysis.choices[0].message.content;
     if (!content) {
       throw new Error('No analysis content received');
     }
 
-    // Parse the analysis
+    console.log('Parsing analysis result');
     const result = JSON.parse(content);
 
+    console.log('Sending response');
     return NextResponse.json({
       transcription: storyText,
       analysis: result
     });
   } catch (error) {
     console.error('Error processing story:', error);
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
     return NextResponse.json(
       { error: 'Failed to process story' },
       { status: 500 }
