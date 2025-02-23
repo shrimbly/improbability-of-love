@@ -58,38 +58,128 @@ interface AnalysisDisplayProps {
   className?: string;
 }
 
+function formatOneInX(x: number): string {
+  if (x >= 1_000_000_000) {
+    return `1 in ${(x / 1_000_000_000).toFixed(1)} billion`;
+  }
+  if (x >= 1_000_000) {
+    return `1 in ${(x / 1_000_000).toFixed(1)} million`;
+  }
+  if (x >= 1_000) {
+    return `1 in ${(x / 1_000).toFixed(1)}k`;
+  }
+  return `1 in ${Math.round(x)}`;
+}
+
 function AnalysisDisplay({ analysis, className = '' }: AnalysisDisplayProps) {
-  const formatProbability = (prob: number): string => {
-    if (prob < 0.0001) {
-      return prob.toExponential(2);
-    }
-    return (prob * 100).toFixed(2) + '%';
-  };
+  const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      <div className="text-center">
-        <h3 className="text-xl font-semibold mb-2">Analysis Complete</h3>
-        <p className="text-muted-foreground">{analysis.summary}</p>
-        <p className="text-2xl font-bold mt-4">
-          Probability: {formatProbability(analysis.finalOneInX)}
-        </p>
+    <div className={`space-y-8 ${className}`}>
+      <div className="text-center space-y-4">
+        <div className="inline-block">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+            className="bg-primary/5 rounded-lg p-6 backdrop-blur-sm"
+          >
+            <h3 className="text-2xl font-bold mb-3">The Improbability Factor</h3>
+            <p className="text-4xl font-bold text-primary mb-2">
+              {formatOneInX(analysis.finalOneInX)}
+            </p>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              {analysis.summary}
+            </p>
+          </motion.div>
+        </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid gap-6">
         {analysis.events.map((event, index) => (
-          <div key={index} className="bg-muted/50 rounded-lg p-4">
-            <h4 className="font-medium mb-2">{event.circumstance}</h4>
-            <ul className="space-y-2">
-              {event.conditions.map((condition, condIndex) => (
-                <li key={condIndex} className="flex items-center justify-between text-sm">
-                  <span>{condition.description}</span>
-                  <span className="font-mono">{formatProbability(condition.oneInX)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <motion.div
+            key={index}
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <div
+              className={`rounded-lg transition-colors cursor-pointer ${
+                selectedEvent === index
+                  ? 'bg-primary/10 shadow-lg'
+                  : 'bg-muted/50 hover:bg-primary/5'
+              }`}
+              onClick={() => setSelectedEvent(selectedEvent === index ? null : index)}
+            >
+              <div className="p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="font-medium text-lg mb-1">{event.circumstance}</h4>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Combined probability: {formatOneInX(
+                        event.conditions.reduce((acc, curr) => acc * curr.oneInX, 1)
+                      )}
+                    </p>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: selectedEvent === index ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-muted-foreground"
+                    >
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                  </motion.div>
+                </div>
+
+                <motion.div
+                  initial={false}
+                  animate={{ height: selectedEvent === index ? 'auto' : 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-2 space-y-2">
+                    {event.conditions.map((condition, condIndex) => (
+                      <div
+                        key={condIndex}
+                        className="bg-background rounded p-3 flex items-center justify-between text-sm"
+                      >
+                        <span className="flex-1 mr-4">{condition.description}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-32 bg-muted rounded-full overflow-hidden">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${Math.min(100, (1 / condition.oneInX) * 100)}%` }}
+                              transition={{ duration: 0.5, delay: 0.2 }}
+                              className="h-full bg-primary"
+                            />
+                          </div>
+                          <span className="font-mono whitespace-nowrap">
+                            {formatOneInX(condition.oneInX)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
         ))}
+      </div>
+
+      <div className="text-center text-sm text-muted-foreground mt-6">
+        <p>Click on each event to see the detailed breakdown of probabilities</p>
       </div>
     </div>
   );
