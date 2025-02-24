@@ -49,55 +49,74 @@ function AnalysisDisplay({ analysis, className = '' }: AnalysisDisplayProps) {
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null);
 
   return (
-    <div className={`space-y-8 ${className}`}>
-      <div className="text-center space-y-4">
-        <div className="inline-block">
+    <div className={`space-y-12 ${className}`}>
+      <div className="text-center relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-primary/3 to-transparent -z-10 rounded-3xl blur-xl" />
+        <div className="inline-block relative">
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="bg-primary/5 rounded-lg p-6 backdrop-blur-sm"
+            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: "easeOut" }}
+            className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 backdrop-blur-sm border border-primary/10 shadow-xl"
           >
-            <h3 className="text-2xl font-bold mb-3">The Improbability Factor</h3>
-            <p className="text-4xl font-bold text-primary mb-2">
-              {formatOneInX(analysis.finalOneInX)}
-            </p>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              {analysis.summary}
-            </p>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <h3 className="text-3xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                The Improbability Factor
+              </h3>
+              <div className="relative">
+                <p className="text-5xl font-bold text-primary mb-4 font-display tracking-tight">
+                  {formatOneInX(analysis.finalOneInX)}
+                </p>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ delay: 0.5, duration: 1 }}
+                  className="h-1 bg-gradient-to-r from-primary/50 to-primary/20 rounded-full mx-auto max-w-[200px]"
+                />
+              </div>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto mt-4 leading-relaxed">
+                {analysis.summary}
+              </p>
+            </motion.div>
           </motion.div>
         </div>
       </div>
 
-      <div className="grid gap-6">
+      <div className="grid gap-6 relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent -z-10 rounded-3xl blur-3xl" />
         {analysis.events.map((event, index) => (
           <motion.div
             key={index}
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: index * 0.1 }}
+            transition={{ delay: index * 0.15 }}
           >
             <div
-              className={`rounded-lg transition-colors cursor-pointer ${
+              className={`rounded-xl transition-all duration-300 cursor-pointer ${
                 selectedEvent === index
-                  ? 'bg-primary/10 shadow-lg'
-                  : 'bg-muted/50 hover:bg-primary/5'
+                  ? 'bg-gradient-to-r from-primary/15 to-primary/5 shadow-lg border border-primary/10'
+                  : 'bg-card hover:bg-primary/5 border border-border'
               }`}
               onClick={() => setSelectedEvent(selectedEvent === index ? null : index)}
             >
-              <div className="p-4">
+              <div className="p-6">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h4 className="font-medium text-lg mb-1">{event.circumstance}</h4>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      Combined probability: {formatOneInX(
+                    <h4 className="font-medium text-lg mb-2">{event.circumstance}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Combined odds: {formatOneInX(
                         event.conditions.reduce((acc, curr) => acc * curr.oneInX, 1)
                       )}
                     </p>
                   </div>
                   <motion.div
                     animate={{ rotate: selectedEvent === index ? 180 : 0 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-primary/70"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -109,7 +128,6 @@ function AnalysisDisplay({ analysis, className = '' }: AnalysisDisplayProps) {
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="text-muted-foreground"
                     >
                       <path d="m6 9 6 6 6-6"/>
                     </svg>
@@ -118,31 +136,37 @@ function AnalysisDisplay({ analysis, className = '' }: AnalysisDisplayProps) {
 
                 <motion.div
                   initial={false}
-                  animate={{ height: selectedEvent === index ? 'auto' : 0 }}
+                  animate={{ 
+                    height: selectedEvent === index ? 'auto' : 0,
+                    opacity: selectedEvent === index ? 1 : 0
+                  }}
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <div className="pt-2 space-y-2">
+                  <div className="pt-4 space-y-3">
                     {event.conditions.map((condition, condIndex) => (
-                      <div
+                      <motion.div
                         key={condIndex}
-                        className="bg-background rounded p-3 flex items-center justify-between text-sm"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: condIndex * 0.1 }}
+                        className="bg-background/50 backdrop-blur-sm rounded-lg p-4 flex items-center justify-between text-sm border border-border/50"
                       >
-                        <span className="flex-1 mr-4">{condition.description}</span>
-                        <div className="flex items-center gap-2">
-                          <div className="h-2 w-32 bg-muted rounded-full overflow-hidden">
+                        <span className="flex-1 mr-6">{condition.description}</span>
+                        <div className="flex items-center gap-3 min-w-[200px]">
+                          <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ width: `${Math.min(100, (1 / condition.oneInX) * 100)}%` }}
-                              transition={{ duration: 0.5, delay: 0.2 }}
-                              className="h-full bg-primary"
+                              transition={{ duration: 0.8, delay: 0.2 }}
+                              className="h-full bg-gradient-to-r from-primary to-primary/70"
                             />
                           </div>
-                          <span className="font-mono whitespace-nowrap">
+                          <span className="font-mono whitespace-nowrap text-primary">
                             {formatOneInX(condition.oneInX)}
                           </span>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </motion.div>
@@ -152,9 +176,16 @@ function AnalysisDisplay({ analysis, className = '' }: AnalysisDisplayProps) {
         ))}
       </div>
 
-      <div className="text-center text-sm text-muted-foreground mt-6">
-        <p>Click on each event to see the detailed breakdown of probabilities</p>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="text-center text-sm text-muted-foreground"
+      >
+        <p className="inline-block px-4 py-2 rounded-full bg-primary/5 backdrop-blur-sm border border-primary/10">
+          Click on each event to explore the detailed probability breakdown
+        </p>
+      </motion.div>
     </div>
   );
 }
@@ -233,7 +264,7 @@ function TextInput() {
       )}
 
       {analysis && (
-        <AnalysisDisplay analysis={analysis} className="mt-8" />
+        <AnalysisDisplay analysis={analysis} className="mt-16" />
       )}
     </div>
   );

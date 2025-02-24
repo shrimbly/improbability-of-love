@@ -369,7 +369,7 @@ export function VoiceRecorder() {
       )}
 
       {analysis && (
-        <AnalysisDisplay analysis={analysis} className="mt-8" />
+        <AnalysisDisplay analysis={analysis} className="mt-16" />
       )}
     </div>
   );
